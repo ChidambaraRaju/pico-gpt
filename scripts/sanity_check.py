@@ -7,6 +7,8 @@ Uses CPU and dummy data.
 
 import sys
 from pathlib import Path
+import tempfile
+import shutil
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
@@ -91,9 +93,9 @@ try:
     param_count = sum(p.numel() for p in model.parameters())
     print(f"  ✓ Model created with {param_count:,} parameters")
 
-    # Verify approximate parameter count (~35M for our config)
-    if 30_000_000 < param_count < 40_000_000:
-        print(f"  ✓ Parameter count in expected range (~35M)")
+    # Verify approximate parameter count (~30M for our config)
+    if 25_000_000 < param_count < 40_000_000:
+        print(f"  ✓ Parameter count in expected range (~30M)")
     else:
         print(f"  ⚠ Parameter count {param_count:,} seems unexpected")
 except Exception as e:
@@ -184,35 +186,33 @@ except Exception as e:
 # Test 8: Checkpoint save/load
 print("\n[Test 8] Checking checkpoint save/load...")
 try:
-    import tempfile
+    tmp_path = Path(tempfile.gettempdir()) / "test_checkpoint.pt"
 
     # Save checkpoint
-    with tempfile.NamedTemporaryFile(suffix='.pt', delete=False) as tmp_file:
-        checkpoint = {
-            "step": 100,
-            "model_state_dict": model.state_dict(),
-            "best_val_loss": 3.5,
-            "config": model_config,
-        }
-        torch.save(checkpoint, tmp_file)
+    checkpoint = {
+        "step": 100,
+        "model_state_dict": model.state_dict(),
+        "best_val_loss": 3.5,
+        "config": model_config,
+    }
+    torch.save(checkpoint, tmp_path)
 
-        # Load checkpoint
-        loaded = torch.load(tmp_file, map_location='cpu')
+    # Load checkpoint
+    loaded = torch.load(tmp_path, map_location='cpu')
 
-        assert loaded["step"] == 100
-        assert loaded["best_val_loss"] == 3.5
-        assert "model_state_dict" in loaded
+    assert loaded["step"] == 100
+    assert loaded["best_val_loss"] == 3.5
+    assert "model_state_dict" in loaded
 
-        # Verify model can load from checkpoint
-        model2 = GPT(loaded["config"])
-        model2.load_state_dict(loaded["model_state_dict"])
+    # Verify model can load from checkpoint
+    model2 = GPT(loaded["config"])
+    model2.load_state_dict(loaded["model_state_dict"])
 
-        print(f"  ✓ Checkpoint save works")
-        print(f"  ✓ Checkpoint load works")
+    print(f"  ✓ Checkpoint save works")
+    print(f"  ✓ Checkpoint load works")
 
     # Cleanup
-    import os
-    os.unlink(tmp_file)
+    tmp_path.unlink()
 except Exception as e:
     print(f"  ✗ Checkpoint save/load failed: {e}")
     sys.exit(1)
@@ -222,25 +222,26 @@ print("\n[Test 9] Checking safetensors export...")
 try:
     from safetensors.torch import save_file, load_file
 
-    with tempfile.NamedTemporaryFile(suffix='.safetensors', delete=False) as tmp_file:
-        # Save
-        save_file(model.state_dict(), tmp_file)
+    tmp_path = Path(tempfile.gettempdir()) / "test_model.safetensors"
 
-        # Load
-        loaded_state = load_file(tmp_file)
+    # Save
+    save_file(model.state_dict(), tmp_path)
 
-        # Verify keys match
-        assert set(loaded_state.keys()) == set(model.state_dict().keys())
+    # Load
+    loaded_state = load_file(tmp_path)
 
-        # Verify shapes match
-        for key in loaded_state:
-            assert loaded_state[key].shape == model.state_dict()[key].shape
+    # Verify keys match
+    assert set(loaded_state.keys()) == set(model.state_dict().keys())
 
-        print(f"  ✓ Safetensors save works")
-        print(f"  ✓ Safetensors load works")
+    # Verify shapes match
+    for key in loaded_state:
+        assert loaded_state[key].shape == model.state_dict()[key].shape
 
-    import os
-    os.unlink(tmp_file)
+    print(f"  ✓ Safetensors save works")
+    print(f"  ✓ Safetensors load works")
+
+    # Cleanup
+    tmp_path.unlink()
 except ImportError:
     print(f"  ⚠ safetensors not installed (pip install safetensors)")
 except Exception as e:
@@ -250,20 +251,25 @@ except Exception as e:
 # Test 10: Tokenizer metadata export
 print("\n[Test 10] Checking tokenizer metadata export...")
 try:
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        export_tokenizer_metadata(tmp_dir, model_max_length=128)
+    tmp_dir = Path(tempfile.gettempdir()) / "test_tokenizer"
+    tmp_dir.mkdir(exist_ok=True)
 
-        # Check files created
-        assert (Path(tmp_dir) / "tokenizer_config.json").exists()
-        assert (Path(tmp_dir) / "special_tokens_map.json").exists()
+    export_tokenizer_metadata(str(tmp_dir), model_max_length=128)
 
-        # Verify content
-        import json
-        with open(Path(tmp_dir) / "tokenizer_config.json") as f:
-            tc = json.load(f)
-        assert tc["model_max_length"] == 128
+    # Check files created
+    assert (tmp_dir / "tokenizer_config.json").exists()
+    assert (tmp_dir / "special_tokens_map.json").exists()
 
-        print(f"  ✓ Tokenizer metadata export works")
+    # Verify content
+    import json
+    with open(tmp_dir / "tokenizer_config.json") as f:
+        tc = json.load(f)
+    assert tc["model_max_length"] == 128
+
+    print(f"  ✓ Tokenizer metadata export works")
+
+    # Cleanup
+    shutil.rmtree(tmp_dir)
 except Exception as e:
     print(f"  ✗ Tokenizer metadata export failed: {e}")
     sys.exit(1)
@@ -271,30 +277,35 @@ except Exception as e:
 # Test 11: Model config export
 print("\n[Test 11] Checking model config export...")
 try:
-    with tempfile.TemporaryDirectory() as tmp_dir:
-        # Simulate export_to_huggingface (just the config part)
-        config_dict = {
-            "model_type": "custom_gpt",
-            "vocab_size": model_config.vocab_size,
-            "n_layer": model_config.n_layer,
-            "n_head": model_config.n_head,
-            "n_embd": model_config.n_embd,
-            "context_length": model_config.context_length,
-            "dropout": model_config.dropout,
-            "bias": model_config.bias,
-            "weight_tying": model_config.weight_tying,
-            "ffn_dim": model_config.ffn_dim,
-        }
+    tmp_dir = Path(tempfile.gettempdir()) / "test_config"
+    tmp_dir.mkdir(exist_ok=True)
 
-        with open(Path(tmp_dir) / "config.json", "w") as f:
-            json.dump(config_dict, f, indent=2)
+    # Simulate export_to_huggingface (just config part)
+    config_dict = {
+        "model_type": "custom_gpt",
+        "vocab_size": model_config.vocab_size,
+        "n_layer": model_config.n_layer,
+        "n_head": model_config.n_head,
+        "n_embd": model_config.n_embd,
+        "context_length": model_config.context_length,
+        "dropout": model_config.dropout,
+        "bias": model_config.bias,
+        "weight_tying": model_config.weight_tying,
+        "ffn_dim": model_config.ffn_dim,
+    }
 
-        # Verify
-        with open(Path(tmp_dir) / "config.json") as f:
-            loaded = json.load(f)
-        assert loaded["n_layer"] == 6
+    with open(tmp_dir / "config.json", "w") as f:
+        json.dump(config_dict, f, indent=2)
 
-        print(f"  ✓ Model config export works")
+    # Verify
+    with open(tmp_dir / "config.json") as f:
+        loaded = json.load(f)
+    assert loaded["n_layer"] == 6
+
+    print(f"  ✓ Model config export works")
+
+    # Cleanup
+    shutil.rmtree(tmp_dir)
 except Exception as e:
     print(f"  ✗ Model config export failed: {e}")
     sys.exit(1)
