@@ -220,18 +220,21 @@ except Exception as e:
 # Test 9: Safetensors export (if available)
 print("\n[Test 9] Checking safetensors export...")
 try:
-    from safetensors.torch import save_model, load_model
+    from safetensors.torch import save_file, load_file
 
     tmp_path = Path(tempfile.gettempdir()) / "test_model.safetensors"
 
-    # Save using save_model (handles shared tensors from weight tying)
-    save_model(model, tmp_path)
+    # Save - filter out shared lm_head.weight to avoid duplicate storage warning
+    state_dict = model.state_dict()
+    state_dict_filtered = {k: v for k, v in state_dict.items() if k != "lm_head.weight"}
+    save_file(state_dict_filtered, tmp_path)
 
     # Load
-    loaded_state = load_model(tmp_path)
+    loaded_state = load_file(tmp_path)
 
-    # Verify keys match (save_model handles shared tensors properly)
-    assert set(loaded_state.keys()) == set(model.state_dict().keys())
+    # Verify keys match (excluding lm_head.weight which is tied to wte.weight)
+    expected_keys = set(state_dict.keys()) - {"lm_head.weight"}
+    assert set(loaded_state.keys()) == expected_keys
 
     # Verify shapes match
     for key in loaded_state:
