@@ -347,7 +347,6 @@ class Trainer:
             "optimizer_state_dict": self.optimizer.state_dict(),
             "scheduler_state_dict": self.scheduler.state_dict(),
             "best_val_loss": self.best_val_loss,
-            "config": self.model.config,
         }
         torch.save(checkpoint, self.output_dir / filename)
         print(f"Saved checkpoint: {filename}")

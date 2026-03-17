@@ -27,11 +27,8 @@ def load_model(checkpoint_path: str) -> tuple[GPT, GPT2Tokenizer]:
     # Load checkpoint
     checkpoint = torch.load(checkpoint_path, map_location="cpu")
 
-    # Get config from checkpoint or use defaults
-    if "config" in checkpoint:
-        config = checkpoint["config"]
-    else:
-        config = ModelConfig()
+    # Use default config (always available from pico_gpt.config)
+    config = ModelConfig()
 
     # Create model
     model = GPT(config)
