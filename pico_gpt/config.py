@@ -25,9 +25,6 @@ class ModelConfig:
     bias: bool = False
     flash_attention: bool = True
 
-    # Weight tying
-    weight_tying: bool = False
-
     def __post_init__(self):
         """Validate configuration."""
         assert self.n_embd % self.n_head == 0, "n_embd must be divisible by n_head"

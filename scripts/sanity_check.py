@@ -26,7 +26,7 @@ try:
     from pico_gpt.tokenizer import GPT2Tokenizer
     from pico_gpt.model import GPT
     from pico_gpt.dataloader import MemoryMappedDataset
-    from pico_gpt.trainer import Trainer, CosineAnnealingWarmupScheduler
+    from pico_gpt.trainer import Trainer
     from pico_gpt.data import PreprocessingState, TokenBuffer
     from pico_gpt.export import export_to_huggingface, upload_to_hub
     from pico_gpt.tokenizer_utils import export_tokenizer_metadata
@@ -151,39 +151,7 @@ except Exception as e:
     print(f"  ✗ Generation failed: {e}")
     sys.exit(1)
 
-# Test 7: Learning rate scheduler
-print("\n[Test 7] Checking learning rate scheduler...")
-try:
-    dummy_optimizer = torch.optim.AdamW(model.parameters(), lr=3e-4)
-    scheduler = CosineAnnealingWarmupScheduler(
-        optimizer=dummy_optimizer,
-        warmup_steps=100,
-        max_steps=1000,
-        max_lr=3e-4,
-        min_lr=3e-5,
-    )
-
-    # Check warmup
-    lr_warmup = scheduler.get_lr_for_step(50)
-    assert lr_warmup < scheduler.max_lr
-
-    # Check decay
-    lr_decay = scheduler.get_lr_for_step(500)
-    assert lr_decay < scheduler.max_lr
-
-    # Check end
-    lr_end = scheduler.get_lr_for_step(1000)
-    assert lr_end == scheduler.min_lr
-
-    print(f"  ✓ Scheduler works")
-    print(f"  ✓ Warmup LR (step 50): {lr_warmup:.2e}")
-    print(f"  ✓ Decay LR (step 500): {lr_decay:.2e}")
-    print(f"  ✓ End LR (step 1000): {lr_end:.2e}")
-except Exception as e:
-    print(f"  ✗ Scheduler failed: {e}")
-    sys.exit(1)
-
-# Test 8: Checkpoint save/load
+# Test 7: Checkpoint save/load
 print("\n[Test 8] Checking checkpoint save/load...")
 try:
     tmp_path = Path(tempfile.gettempdir()) / "test_checkpoint.pt"
@@ -217,23 +185,22 @@ except Exception as e:
     print(f"  ✗ Checkpoint save/load failed: {e}")
     sys.exit(1)
 
-# Test 9: Safetensors export (if available)
-print("\n[Test 9] Checking safetensors export...")
+# Test 8: Safetensors export (if available)
+print("\n[Test 8] Checking safetensors export...")
 try:
     from safetensors.torch import save_file, load_file
 
     tmp_path = Path(tempfile.gettempdir()) / "test_model.safetensors"
 
-    # Save - filter out shared lm_head.weight to avoid duplicate storage warning
+    # Save
     state_dict = model.state_dict()
-    state_dict_filtered = {k: v for k, v in state_dict.items() if k != "lm_head.weight"}
-    save_file(state_dict_filtered, tmp_path)
+    save_file(state_dict, tmp_path)
 
     # Load
     loaded_state = load_file(tmp_path)
 
-    # Verify keys match (excluding lm_head.weight which is tied to wte.weight)
-    expected_keys = set(state_dict.keys()) - {"lm_head.weight"}
+    # Verify keys match
+    expected_keys = set(state_dict.keys())
     assert set(loaded_state.keys()) == expected_keys
 
     # Verify shapes match
@@ -251,8 +218,8 @@ except Exception as e:
     print(f"  ✗ Safetensors failed: {e}")
     sys.exit(1)
 
-# Test 10: Tokenizer metadata export
-print("\n[Test 10] Checking tokenizer metadata export...")
+# Test 9: Tokenizer metadata export
+print("\n[Test 9] Checking tokenizer metadata export...")
 try:
     tmp_dir = Path(tempfile.gettempdir()) / "test_tokenizer"
     tmp_dir.mkdir(exist_ok=True)
@@ -277,8 +244,8 @@ except Exception as e:
     print(f"  ✗ Tokenizer metadata export failed: {e}")
     sys.exit(1)
 
-# Test 11: Model config export
-print("\n[Test 11] Checking model config export...")
+# Test 10: Model config export
+print("\n[Test 10] Checking model config export...")
 try:
     tmp_dir = Path(tempfile.gettempdir()) / "test_config"
     tmp_dir.mkdir(exist_ok=True)
@@ -293,7 +260,6 @@ try:
         "context_length": model_config.context_length,
         "dropout": model_config.dropout,
         "bias": model_config.bias,
-        "weight_tying": model_config.weight_tying,
         "ffn_dim": model_config.ffn_dim,
     }
 
@@ -313,8 +279,8 @@ except Exception as e:
     print(f"  ✗ Model config export failed: {e}")
     sys.exit(1)
 
-# Test 12: CPU vs CUDA handling
-print("\n[Test 12] Checking device handling...")
+# Test 11: CPU vs CUDA handling
+print("\n[Test 11] Checking device handling...")
 try:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_cpu = GPT(model_config).to(device)

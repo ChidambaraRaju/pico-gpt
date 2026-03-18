@@ -20,7 +20,6 @@ class ModelConfig:
     dropout: float = 0.1
     bias: bool = False
     flash_attention: bool = True
-    weight_tying: bool = True
 ```
 
 #### `TrainingConfig`

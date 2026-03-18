@@ -1,6 +1,5 @@
 """
 Training script for Pico-GPT.
-Reference: @instructions/05_training_pipeline.md
 """
 import sys
 from pathlib import Path
@@ -15,35 +14,30 @@ from pico_gpt.trainer import Trainer
 
 def main():
     parser = argparse.ArgumentParser(description="Train Pico-GPT")
-    parser.add_argument("--config", type=str, default=None, help="Path to config file")
     parser.add_argument("--data-dir", type=str, default="data", help="Data directory")
     parser.add_argument("--output-dir", type=str, default="checkpoints", help="Output directory")
-    parser.add_argument("--resume", type=str, default=None, help="Resume from checkpoint")
     parser.add_argument("--max-steps", type=int, default=None, help="Override max steps")
+    parser.add_argument("--lr", type=float, default=None, help="Override learning rate")
+    parser.add_argument("--checkpoint-interval", type=int, default=None, help="Override checkpoint interval")
     args = parser.parse_args()
 
-    # Load or create config
-    if args.config:
-        # Load from file (simplified)
-        model_config = ModelConfig()
-        training_config = TrainingConfig()
-    else:
-        model_config = ModelConfig()
-        training_config = TrainingConfig()
+    # Load config
+    model_config = ModelConfig()
+    training_config = TrainingConfig()
 
-    # Override max steps if specified
+    # Override if specified
     if args.max_steps:
         training_config.max_steps = args.max_steps
 
     print(f"Model config: {model_config}")
-    print(f"Training config: {training_config}")
+    print(f"Training config: max_steps={training_config.max_steps}, lr={training_config.learning_rate}")
 
     # Create model
     model = GPT(model_config)
     param_count = sum(p.numel() for p in model.parameters())
     print(f"Model parameters: {param_count:,}")
 
-    # Create data loaders
+    # Create data loader
     train_loader = MemoryMappedDataset(
         data_dir=args.data_dir,
         context_length=model_config.context_length,
@@ -51,34 +45,19 @@ def main():
         split="train",
     )
 
-    val_loader = MemoryMappedDataset(
-        data_dir=args.data_dir,
-        context_length=model_config.context_length,
-        batch_size=training_config.batch_size,
-        split="val",
-    )
-
     print(f"Training tokens: {train_loader.n_tokens:,}")
-    print(f"Validation tokens: {val_loader.n_tokens:,}")
 
     # Create trainer
     trainer = Trainer(
         model=model,
         train_loader=train_loader,
-        val_loader=val_loader,
         output_dir=args.output_dir,
+        config=model_config,
         max_steps=training_config.max_steps,
-        batch_size=training_config.batch_size,
-        micro_batch_size=training_config.micro_batch_size,
-        learning_rate=training_config.learning_rate,
+        learning_rate=args.lr or training_config.learning_rate,
         weight_decay=training_config.weight_decay,
-        warmup_steps=training_config.warmup_steps,
-        min_lr=training_config.min_lr,
-        eval_interval=training_config.eval_interval,
-        checkpoint_interval=training_config.checkpoint_interval,
-        grad_clip=training_config.grad_clip,
-        use_bf16=training_config.use_bf16,
-        resume_from=args.resume,
+        checkpoint_interval=args.checkpoint_interval or training_config.checkpoint_interval,
+        log_interval=100,
     )
 
     # Train

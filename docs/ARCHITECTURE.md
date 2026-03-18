@@ -27,7 +27,7 @@ Embedding Sum + Dropout
         ↓
 Final LayerNorm
         ↓
-LM Head (384 x 50257, weight-tied)
+LM Head (384 x 50257)
         ↓
 Logits (B, T, 50257)
 ```
@@ -52,7 +52,6 @@ Logits (B, T, 50257)
 
 - **Token Embedding:** Learned (vocab_size x n_embd)
 - **Positional Embedding:** Learned (context_length x n_embd)
-- **Weight Tying:** LM head shares weights with token embedding
 
 ## Training
 
@@ -92,7 +91,6 @@ Logits (B, T, 50257)
 2. **Fused QKV:** Reduces memory allocations, improves efficiency
 3. **Flash Attention:** Leverages optimized kernels on A100
 4. **Learned Positional Embeddings:** Simple, effective for short context
-5. **Weight Tying:** Reduces parameters, regularizes model
 
 ## References
 

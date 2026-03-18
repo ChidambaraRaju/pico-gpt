@@ -48,10 +48,8 @@ def export_to_huggingface(
     print(f"Exporting model to {output_path}...")
 
     # Save model weights in safetensors format
-    # Filter out lm_head.weight since it's tied to wte.weight (weight tying)
     state_dict = model.state_dict()
-    state_dict_filtered = {k: v for k, v in state_dict.items() if k != "lm_head.weight"}
-    save_file(state_dict_filtered, output_path / "model.safetensors")
+    save_file(state_dict, output_path / "model.safetensors")
 
     # Create config.json
     config_dict = {
@@ -63,7 +61,6 @@ def export_to_huggingface(
         "context_length": config.context_length,
         "dropout": config.dropout,
         "bias": config.bias,
-        "weight_tying": config.weight_tying,
         "ffn_dim": config.ffn_dim,
     }
 
@@ -107,7 +104,6 @@ A small GPT-style decoder-only language model (~35M parameters) trained from scr
 - **Attention Heads:** {config.n_head}
 - **Context Length:** {config.context_length} tokens
 - **Vocabulary:** {config.vocab_size:,} (GPT-2)
-- **Weight Tying:** Enabled
 
 ## Training
 

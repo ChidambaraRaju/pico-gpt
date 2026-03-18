@@ -246,11 +246,7 @@ class GPT(nn.Module):
         self.ln_f = nn.LayerNorm(config.n_embd)
 
         # Language modeling head
-        if config.weight_tying:
-            self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
-            self.lm_head.weight = self.wte.weight
-        else:
-            self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+        self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
     def forward(self, idx: torch.Tensor, targets: Optional[torch.Tensor] = None):
         """
