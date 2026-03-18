@@ -252,26 +252,6 @@ class GPT(nn.Module):
         else:
             self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
 
-        # Initialize weights
-        self.apply(self._init_weights)
-
-    def _init_weights(self, module):
-        """
-        Initialize weights following GPT-2 conventions.
-
-        Reference: @instructions/04_model_architecture.md
-        """
-        if isinstance(module, nn.Linear):
-            # Normal distribution with std = 0.02
-            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-            if module.bias is not None:
-                torch.nn.init.zeros_(module.bias)
-        elif isinstance(module, nn.Embedding):
-            torch.nn.init.normal_(module.weight, mean=0.0, std=0.02)
-        elif isinstance(module, nn.LayerNorm):
-            torch.nn.init.zeros_(module.bias)
-            torch.nn.init.ones_(module.weight)
-
     def forward(self, idx: torch.Tensor, targets: Optional[torch.Tensor] = None):
         """
         Forward pass.
