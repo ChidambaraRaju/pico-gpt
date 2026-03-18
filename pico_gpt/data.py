@@ -17,6 +17,7 @@ class PreprocessingState:
     shard_index: int  # Current shard being filled
     tokens_written: int  # Tokens in current shard
     total_tokens: int  # Total tokens processed across all shards
+    total_processed: int = 0  # Cumulative tokens processed (for resume tracking)
 
     def save(self, path: Path) -> None:
         """Save state to JSON file."""
