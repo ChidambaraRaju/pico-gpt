@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__colab-mcp__add_code_cell",
+      "mcp__colab-mcp__run_code_cell",
+      "Bash(git add:*)",
+      "mcp__colab-mcp__open_colab_browser_connection",
+      "mcp__colab-mcp__get_cells",
+      "Bash(git:*)"
+    ]
+  }
+}

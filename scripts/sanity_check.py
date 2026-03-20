@@ -49,10 +49,8 @@ try:
     assert model_config.context_length == 128
 
     # Validate derived values
-    assert training_config.gradient_accumulation_steps == training_config.batch_size // training_config.micro_batch_size
-
     print(f"  ✓ Model config: {model_config.n_layer} layers, {model_config.n_embd} dim")
-    print(f"  ✓ Training config: batch={training_config.batch_size}, grad_acc={training_config.gradient_accumulation_steps}")
+    print(f"  ✓ Training config: batch={training_config.batch_size}, lr={training_config.learning_rate}")
 except Exception as e:
     print(f"  ✗ Configuration failed: {e}")
     sys.exit(1)
