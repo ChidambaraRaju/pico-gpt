@@ -299,7 +299,7 @@ class GPT(nn.Module):
             ↓
         Final LayerNorm
             ↓
-        Language Modeling Head (tied weights)
+        Language Modeling Head (separate from embeddings - no weight tying)
 
     Reference: @instructions/04_model_architecture.md
     """

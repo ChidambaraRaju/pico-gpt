@@ -23,6 +23,15 @@ The dataset preprocessing script downloads and tokenizes the OpenWebText dataset
 python scripts/prepare_data.py \
     --output-dir data \
     --shard-size 5000000 \
+    --total-tokens 1000000000 \
+    --val-tokens 50000000
+```
+
+For faster testing with a smaller dataset:
+
+```bash
+python scripts/prepare_data.py \
+    --output-dir data \
     --total-tokens 100000000 \
     --val-tokens 5000000
 ```

@@ -44,8 +44,8 @@ def clean_text(text: str) -> str:
 def prepare_dataset(
     output_dir: str = "data",
     shard_size: int = 5_000_000,
-    total_tokens: int = 100_000_000,
-    val_tokens: int = 5_000_000,
+    total_tokens: int = 1_000_000_000,
+    val_tokens: int = 50_000_000,
     resume: bool = True,
 ) -> None:
     """
@@ -146,8 +146,8 @@ def main():
     parser = argparse.ArgumentParser(description="Prepare OpenWebText dataset for Pico-GPT training")
     parser.add_argument("--output-dir", default="data", help="Output directory for binary shards")
     parser.add_argument("--shard-size", type=int, default=5_000_000, help="Tokens per shard")
-    parser.add_argument("--total-tokens", type=int, default=100_000_000, help="Total tokens to process")
-    parser.add_argument("--val-tokens", type=int, default=5_000_000, help="Validation tokens")
+    parser.add_argument("--total-tokens", type=int, default=1_000_000_000, help="Total tokens to process")
+    parser.add_argument("--val-tokens", type=int, default=50_000_000, help="Validation tokens")
     parser.add_argument("--no-resume", action="store_true", help="Start from scratch")
     args = parser.parse_args()
 
