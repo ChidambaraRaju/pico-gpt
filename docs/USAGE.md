@@ -129,7 +129,7 @@ python scripts/generate.py \
 python scripts/export_hf.py \
     --checkpoint checkpoints/checkpoint_step_100000.pt \
     --output hf_model \
-    --training-log outputs/training_log.csv
+    --training-log checkpoints/training_log.csv
 ```
 
 This creates:
@@ -148,7 +148,7 @@ This creates:
 python scripts/export_hf.py \
     --checkpoint checkpoints/checkpoint_step_100000.pt \
     --output hf_model \
-    --training-log outputs/training_log.csv \
+    --training-log checkpoints/training_log.csv \
     --upload username/pico-gpt \
     --private
 ```
