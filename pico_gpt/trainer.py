@@ -5,6 +5,7 @@ import csv
 from pathlib import Path
 from safetensors.torch import save_file
 from datetime import datetime
+from tqdm import tqdm
 
 from pico_gpt.model import GPT
 from pico_gpt.dataloader import MemoryMappedDataset
@@ -108,7 +109,8 @@ class Trainer:
 
         start_time = time.time()
 
-        for step in range(self.max_steps):
+        pbar = tqdm(total=self.max_steps, desc="Training", unit="step")
+        for step in pbar:
             # Get batch
             x, y = self.train_loader.get_batch()
             x = torch.from_numpy(x).to(self.device)
@@ -130,13 +132,14 @@ class Trainer:
             # Logging
             if (step + 1) % self.log_interval == 0:
                 elapsed = time.time() - start_time
-                print(f"Step {step+1:6d} | Loss: {loss.item():.4f} | Time: {elapsed:.1f}s")
+                pbar.set_postfix(loss=f"{loss.item():.4f}", time=f"{elapsed:.1f}s")
                 # Log to CSV
                 self._log_step(step + 1, loss.item(), elapsed)
 
             # Checkpointing (PyTorch format - fast)
             if (step + 1) % self.checkpoint_interval == 0:
                 self.save_checkpoint(step + 1)
+        pbar.close()
 
         # Final save
         final_loss = loss.item()
