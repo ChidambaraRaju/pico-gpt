@@ -310,6 +310,21 @@ For a given sequence of tokens `x_1, x_2, ..., x_n`, the model is trained to pre
 | `tokenizer_config.json` | Tokenizer configuration |
 | `special_tokens_map.json` | Special tokens mapping |
 
+## Installation
+
+This model requires the custom `pico_gpt` package to load and run.
+
+```bash
+git clone https://github.com/ChidambaraRaju/pico-gpt.git
+cd pico-gpt
+pip install -e .
+```
+
+Or install dependencies only:
+```bash
+pip install torch tiktoken safetensors
+```
+
 ## Usage
 
 ### Loading with safetensors:
