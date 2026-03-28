@@ -424,9 +424,9 @@ model.load_state_dict(model_state)
 ```bibtex
 @misc{{pico-gpt,
   title={{Pico-GPT: A Small Language Model from Scratch}},
-  author={{Your Name}},
+  author={{Chidambara Raju G}},
   year={{2026}},
-  howpublished={{\\url{{https://huggingface.co/YOUR_USERNAME/pico-gpt}}}},
+  howpublished={{\\url{{https://huggingface.co/justjuu/pico-gpt}}}},
 }}
 ```
 
